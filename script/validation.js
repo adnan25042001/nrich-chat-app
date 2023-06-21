@@ -24,6 +24,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
+const currentUser = JSON.parse(localStorage.getItem("user"));
+
+if (currentUser !== null && currentUser !== undefined) {
+    window.location = "./index.html";
+}
+
 const profileColors = [
     "#E95F56",
     "#C490D1",
@@ -43,6 +49,7 @@ const profileColors = [
 ];
 
 const authStateChanged = async (user) => {
+    if(!user) return;
     const data = await get(ref(db, "users/" + user.uid));
     const currentUser = data.val();
     if (!currentUser) {
@@ -53,7 +60,10 @@ const authStateChanged = async (user) => {
             email: user.email,
             color: profileColors[colorIndex],
         });
+    } else {
+        localStorage.setItem("user", JSON.stringify(currentUser));
     }
+    window.location = "index.html";
 };
 
 onAuthStateChanged(auth, authStateChanged);

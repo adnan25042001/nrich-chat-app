@@ -1,12 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat | App</title>
-    <script src="./script/index.js"></script>
-</head>
-<body>
-    
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Chat | App</title>
+        <link rel="stylesheet" href="./style/index.css" />
+        <script>
+            const currentUser = JSON.parse(localStorage.getItem("user"));
+
+            if (currentUser === null || currentUser === undefined) {
+                window.location = "./login.html";
+            }
+        </script>
+        <script
+            src="https://kit.fontawesome.com/f29fdf8ecb.js"
+            crossorigin="anonymous"
+        ></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="left">
+                <div class="user-nav">
+                    <div id="user-image"></div>
+                    <div id="logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </div>
+                </div>
+                <div class="chats scrollbar">
+                    <div class="chat">
+                        <div class="chat-image">S</div>
+                        <div></div>
+                    </div>
+                </div>
+                <div class="user-update">
+                    <div class="exit-user">
+                        <div>
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>Profile</span>
+                        </div>
+                    </div>
+                    <div class="user-info">
+                        <div class="big-user-image"></div>
+                        <div contenteditable></div>
+                        <div></div>
+                    </div>
+                    <div class="profile-colors"></div>
+                </div>
+            </div>
+            <div class="right">
+                <div class="chat-info">
+                    <div>
+                        <div>S</div>
+                        <div>Salman Khan</div>
+                    </div>
+                </div>
+                <div class="chat-box"></div>
+                <div class="chat-input">
+                    <div><i class="fa-regular fa-face-smile"></i></div>
+                    <div><i class="fa-sharp fa-solid fa-paperclip"></i></div>
+                    <input
+                        type="text"
+                        placeholder="Type a message"
+                        id="message"
+                    />
+                    <div><i class="fa-solid fa-microphone"></i></div>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>
+
+<script src="./script/index.js" type="module"></script>
