@@ -109,6 +109,9 @@
     cursor: pointer;
     padding: 16px;
 }
+.chat.selected{
+    background-color: black;
+}
 .chat:hover {
     background-color: black;
 }
@@ -189,6 +192,12 @@
     font-weight: bold;
     font-size: 18px;
     color: white;
+}
+
+.chat-info > div > :nth-child(2) > :nth-child(2){
+    font-weight: lighter;
+    font-size: 14px;
+    color: gray;
 }
 
 .chat-box {

@@ -53,11 +53,14 @@ const authStateChanged = async (user) => {
             displayName: user.displayName,
             email: user.email,
             color: profileColors[colorIndex],
+            date: new Date().toUTCString(),
         });
     } else {
         localStorage.setItem("user", JSON.stringify(currentUser));
     }
-    window.location = "index.html";
+    setTimeout(() => {
+        window.location = "index.html";
+    }, 300);
 };
 
 onAuthStateChanged(auth, authStateChanged);

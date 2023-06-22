@@ -9,6 +9,7 @@ import {
     ref,
     update,
     get,
+    set,
     onValue,
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
@@ -26,9 +27,21 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-const currentUser = JSON.parse(localStorage.getItem("user"));
+let currentUser = JSON.parse(localStorage.getItem("user"));
 
-// if (!currentUser) window.location = "./login.html";
+setTimeout(() => {
+    if (!currentUser) window.location = "./login.html";
+}, 10000);
+
+const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+];
 
 const profileColors = [
     "#E95F56",
@@ -93,7 +106,7 @@ const setProfileColors = (currentUser) => {
         currentUser.email;
 };
 
-setProfileColors(currentUser);
+    setProfileColors(currentUser);
 
 const keyUp = (event) => {
     if (event.target.innerText.trim() !== currentUser?.displayName) {
@@ -108,7 +121,6 @@ const keyUp = (event) => {
 const keyDown = (event) => {
     if (event.key === "Enter" && event.keyCode === 13) {
         event.preventDefault();
-        console.log(1);
     }
 };
 
@@ -120,8 +132,41 @@ const appendAllUsers = (data) => {
     for (let key in data) {
         if (key === currentUser.uid) continue;
 
+        // creating the date format here
+        let myDate;
+
+        let date = new Date(data[key].date);
+
+        const differenceInDays = Math.round(
+            (new Date() - date) / (24 * 60 * 60 * 1000)
+        );
+
+        if (differenceInDays >= 7) {
+            myDate = date.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            });
+        } else if (differenceInDays > 0) {
+            myDate = days[date.getDay()];
+        } else {
+            myDate = date.toLocaleTimeString("en-IN", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+            });
+        }
+
         let chat = document.createElement("div");
         chat.setAttribute("class", "chat");
+        chat.addEventListener("click", () => {
+            selectedChat(data[key], chat, date);
+        });
+
+        if (currentUser.chatUser === key) {
+            chat.classList.add("selected");
+            chatUserHeader(data[key], myDate)
+        }
 
         let chatImage = document.createElement("div");
         chatImage.setAttribute("class", "chat-image");
@@ -136,12 +181,12 @@ const appendAllUsers = (data) => {
         innerDiv1.innerText = data[key].displayName;
 
         let innerDiv2 = document.createElement("div");
-        innerDiv2.innerText = "Date";
+        innerDiv2.innerText = myDate;
 
         span.append(innerDiv1, innerDiv2);
 
         let p = document.createElement("p");
-        p.innerText = "hello world";
+        p.innerText = "...";
 
         let unreadMessageSpan = document.createElement("span");
         unreadMessageSpan.innerText = 6;
@@ -161,6 +206,53 @@ const logout = () => {
         localStorage.setItem("user", null);
         window.location = "login.html";
     });
+};
+
+//selected chat
+const selectedChat = async (userData, element, date) => {
+    let selectedClasses = document.querySelectorAll(".selected");
+    selectedClasses.forEach((ele) => ele.classList.remove("selected"));
+    element.classList.add("selected");
+
+    try {
+        let obj = { ...currentUser };
+        obj.chatUser = userData.uid;
+        console.log(obj);
+        await update(ref(db, "users/" + currentUser.uid), obj);
+
+        const data = await get(ref(db, "users/" + currentUser.uid));
+        const updatedCurrentUser = data.val();
+
+        localStorage.setItem("user", JSON.stringify(updatedCurrentUser));
+
+        const currentUserChatId = currentUser.uid + "+" + userData.uid;
+        const userChatId = userData.uid + "+" + currentUser.uid;
+
+        const currentUserChatData = await get(
+            ref(db, "user-chats/" + currentUserChatId)
+        );
+        const currentUserChats = currentUserChatData.val();
+
+        if (!currentUserChats) {
+            await set(ref(db, "user-chats/" + currentUserChatId), {
+                uid: currentUserChatId,
+                messages: [],
+            });
+        }
+
+        const userChatdata = await get(ref(db, "user-chats/" + userChatId));
+        const userChats = userChatdata.val();
+        if (!userChats) {
+            await set(ref(db, "user-chats/" + userChatId), {
+                uid: userChatId,
+                messages: [],
+            });
+        }
+
+        chatUserHeader(userData, date);
+    } catch (error) {
+        console.log(error);
+    }
 };
 
 //getting all the users from database
@@ -213,4 +305,32 @@ const handleUpdateProfile = async (type, value) => {
     } catch (error) {
         console.log(error);
     }
+};
+
+// All methods related to chat will come here
+const chatUserHeader = (data, date) => {
+
+    let chatUserInfo = document.querySelector(".chat-info");
+    chatUserInfo.innerHTML = null;
+
+    let div = document.createElement("div");
+
+    let chatUserImage = document.createElement("div");
+    chatUserImage.innerText = data.displayName[0].toUpperCase();
+    chatUserImage.style.backgroundColor = data.color
+
+    let innerDiv = document.createElement("div");
+
+    let nameDiv = document.createElement("div");
+    nameDiv.innerText = data.displayName;
+
+    let dateDiv = document.createElement("div");
+    dateDiv.innerText = date;
+
+    innerDiv.append(nameDiv, dateDiv);
+
+    div.append(chatUserImage, innerDiv);
+
+    chatUserInfo.append(div)
+
 };

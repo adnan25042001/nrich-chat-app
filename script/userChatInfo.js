@@ -21,3 +21,16 @@ const firebaseConfig = {
     messagingSenderId: "115859145847",
     appId: "1:115859145847:web:a6d25d0ae8446ea4a23272",
 };
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+let currentUser = JSON.parse(localStorage.getItem("user"));
+
+
+//getting all the users from database
+onValue(ref(db, "users/" + currentUser.uid), (snap) => {
+    currentUser = snap.val();
+});
+
