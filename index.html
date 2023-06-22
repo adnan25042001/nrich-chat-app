@@ -5,13 +5,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Chat | App</title>
         <link rel="stylesheet" href="./style/index.css" />
-        <script>
-            const currentUser = JSON.parse(localStorage.getItem("user"));
-
-            if (currentUser === null || currentUser === undefined) {
-                window.location = "./login.html";
-            }
-        </script>
         <script
             src="https://kit.fontawesome.com/f29fdf8ecb.js"
             crossorigin="anonymous"
@@ -26,10 +19,25 @@
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </div>
                 </div>
+                <div class="search-user">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input
+                        type="text"
+                        placeholder="Search user..."
+                        id="search"
+                    />
+                </div>
                 <div class="chats scrollbar">
                     <div class="chat">
                         <div class="chat-image">S</div>
-                        <div></div>
+                        <div>
+                            <span>
+                                <div>Salman Khan</div>
+                                <div>Date</div>
+                            </span>
+                            <p>Aaj 4 logo ko gaadi se thoka</p>
+                            <span>6</span>
+                        </div>
                     </div>
                 </div>
                 <div class="user-update">
@@ -41,7 +49,11 @@
                     </div>
                     <div class="user-info">
                         <div class="big-user-image"></div>
-                        <div contenteditable></div>
+                        <div>
+                            <i class="fa-regular fa-pen-to-square" id="square-pen"></i>
+                            <i class="fa-solid fa-circle-check" id="check-circle"></i>
+                            <div contenteditable id="edit-profile-name"></div>
+                        </div>
                         <div></div>
                     </div>
                     <div class="profile-colors"></div>

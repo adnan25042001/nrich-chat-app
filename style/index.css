@@ -34,6 +34,7 @@
 #user-image,
 #logout,
 .big-user-image,
+.chat-image,
 .chat-info > div > :nth-child(1) {
     height: 40px;
     width: 40px;
@@ -58,17 +59,111 @@
     background-color: rgb(239, 68, 68);
 }
 
+.search-user {
+    display: flex;
+    width: 90%;
+    justify-content: center;
+    position: relative;
+    margin: auto;
+    margin-top: 20px;
+}
+
+.search-user i {
+    position: absolute;
+    font-size: 16px;
+    top: 16px;
+    left: 16px;
+    color: white;
+}
+
+#search {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+    padding: 0 20px 0 44px;
+    background-color: #37434b;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    color: white;
+}
+
 .chats {
     display: flex;
     flex-direction: column;
     gap: 8px;
     overflow: auto;
     margin-top: 20px;
+    justify-content: center;
+    align-items: center;
 }
-/* 
-.chat{
 
-} */
+.chat {
+    width: 90%;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    color: white;
+    gap: 16px;
+    border-radius: 24px;
+    cursor: pointer;
+    padding: 16px;
+}
+.chat:hover {
+    background-color: black;
+}
+
+.chat > :nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+    position: relative;
+}
+
+.chat span:nth-child(1) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.chat span > :nth-child(2) {
+    font-size: 12px;
+    color: gray;
+}
+
+.chat p {
+    font-size: 14px;
+    color: gray;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    word-break: break-all;
+}
+
+.chat-image {
+    width: 56px;
+    height: 56px;
+    background-color: teal;
+    margin-left: 0px;
+}
+
+.chat > :nth-child(2) > :nth-child(3) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    height: 20px;
+    width: 20px;
+    position: absolute;
+    right: 0px;
+    bottom: 0;
+    border-radius: 50%;
+    background-color: rgb(239, 68, 68);
+}
 
 .right {
     width: calc(100% - 400px);
@@ -182,6 +277,20 @@
     font-size: 46px;
     margin-left: 0;
 }
+.user-info > :nth-child(2) {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+#edit-profile-name{
+    background-color: transparent;
+    outline: none;
+    border: none;
+    text-align: center;
+}
+.user-info > :nth-child(2) i{
+    cursor: pointer;
+}
 .user-info > :nth-child(3) {
     font-size: 14px;
     color: gray;
@@ -230,22 +339,20 @@
     opacity: 1;
 }
 
-
-
-@media (max-width: 1100px){
-    .left{
-        width: 300px;
+@media (max-width: 1100px) {
+    .left {
+        width: 350px;
     }
-    .right{
+    .right {
         width: calc(100% - 300px);
     }
 }
 
-@media (max-width: 676px){
-    .left{
+@media (max-width: 676px) {
+    .left {
         width: 100%;
     }
-    .right{
+    .right {
         display: none;
     }
 }
