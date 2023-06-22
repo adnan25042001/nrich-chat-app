@@ -64,8 +64,7 @@
     width: 90%;
     justify-content: center;
     position: relative;
-    margin: auto;
-    margin-top: 20px;
+    margin: 20px auto;
 }
 
 .search-user i {
@@ -90,12 +89,13 @@
 
 .chats {
     display: flex;
+    height: calc(100vh - 148px);
     flex-direction: column;
     gap: 8px;
     overflow: auto;
-    margin-top: 20px;
     justify-content: center;
     align-items: center;
+    padding-top: 40px;
 }
 
 .chat {
@@ -109,7 +109,7 @@
     cursor: pointer;
     padding: 16px;
 }
-.chat.selected{
+.chat.selected {
     background-color: black;
 }
 .chat:hover {
@@ -150,7 +150,7 @@
 .chat-image {
     width: 56px;
     height: 56px;
-    background-color: teal;
+    background-color: black;
     margin-left: 0px;
 }
 
@@ -194,7 +194,7 @@
     color: white;
 }
 
-.chat-info > div > :nth-child(2) > :nth-child(2){
+.chat-info > div > :nth-child(2) > :nth-child(2) {
     font-weight: lighter;
     font-size: 14px;
     color: gray;
@@ -203,7 +203,46 @@
 .chat-box {
     height: calc(100% - 120px);
     background-color: #11171b;
+    padding: 20px 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    overflow: auto;
 }
+
+.current-user-msg,
+.user-msg {
+    position: relative;
+    width: fit-content;
+    max-width: 80%;
+    min-width: 50px;
+    padding: 10px 50px 10px 15px;
+    background-color: #37434b;
+    border-radius: 20px;
+    color: white;
+}
+
+.current-user-msg {
+    align-self: flex-end;
+    border-top-right-radius: 0px;
+}
+
+.user-msg {
+    align-self: flex-start;
+    border-top-left-radius: 0px;
+}
+
+#messageTime {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: rgb(161, 161, 161);
+    position: absolute;
+    right: 10px;
+    bottom: 1px;
+}
+
 .chat-input {
     height: 60px;
     display: flex;
@@ -231,6 +270,7 @@
     outline: none;
     font-size: 16px;
     background-color: #37434b;
+    color: white;
 }
 
 .user-update {
@@ -291,13 +331,13 @@
     justify-content: center;
     gap: 8px;
 }
-#edit-profile-name{
+#edit-profile-name {
     background-color: transparent;
     outline: none;
     border: none;
     text-align: center;
 }
-.user-info > :nth-child(2) i{
+.user-info > :nth-child(2) i {
     cursor: pointer;
 }
 .user-info > :nth-child(3) {

@@ -29,9 +29,7 @@ const db = getDatabase(app);
 
 let currentUser = JSON.parse(localStorage.getItem("user"));
 
-setTimeout(() => {
-    if (!currentUser) window.location = "./login.html";
-}, 10000);
+if (!currentUser) window.location = "./login.html";
 
 const days = [
     "Sunday",
@@ -106,7 +104,7 @@ const setProfileColors = (currentUser) => {
         currentUser.email;
 };
 
-    setProfileColors(currentUser);
+setProfileColors(currentUser);
 
 const keyUp = (event) => {
     if (event.target.innerText.trim() !== currentUser?.displayName) {
@@ -126,8 +124,8 @@ const keyDown = (event) => {
 
 // append all the users into current users chat
 const appendAllUsers = (data) => {
-    const chats = document.querySelector(".chats");
-    chats.innerHTML = null;
+    const chats = document.querySelector("#chats");
+    chats.innerHTML = "";
 
     for (let key in data) {
         if (key === currentUser.uid) continue;
@@ -159,14 +157,15 @@ const appendAllUsers = (data) => {
 
         let chat = document.createElement("div");
         chat.setAttribute("class", "chat");
-        chat.addEventListener("click", () => {
-            selectedChat(data[key], chat, date);
-        });
 
-        if (currentUser.chatUser === key) {
-            chat.classList.add("selected");
-            chatUserHeader(data[key], myDate)
-        }
+        chat.addEventListener("click", async () => {
+            let obj = { ...currentUser };
+            obj.userChat = key;
+            await update(ref(db, "users/" + currentUser.uid), obj);
+            selectedChat(chat);
+            chatUserHeader(data[key], myDate);
+            createUserChat(data[key]);
+        });
 
         let chatImage = document.createElement("div");
         chatImage.setAttribute("class", "chat-image");
@@ -189,7 +188,9 @@ const appendAllUsers = (data) => {
         p.innerText = "...";
 
         let unreadMessageSpan = document.createElement("span");
-        unreadMessageSpan.innerText = 6;
+        unreadMessageSpan.setAttribute("id", "unreadMsg");
+        unreadMessageSpan.innerText = 1;
+        unreadMessageSpan.style.display = "none";
 
         div.append(span, p, unreadMessageSpan);
 
@@ -209,56 +210,24 @@ const logout = () => {
 };
 
 //selected chat
-const selectedChat = async (userData, element, date) => {
+const selectedChat = async (element) => {
     let selectedClasses = document.querySelectorAll(".selected");
     selectedClasses.forEach((ele) => ele.classList.remove("selected"));
     element.classList.add("selected");
-
-    try {
-        let obj = { ...currentUser };
-        obj.chatUser = userData.uid;
-        console.log(obj);
-        await update(ref(db, "users/" + currentUser.uid), obj);
-
-        const data = await get(ref(db, "users/" + currentUser.uid));
-        const updatedCurrentUser = data.val();
-
-        localStorage.setItem("user", JSON.stringify(updatedCurrentUser));
-
-        const currentUserChatId = currentUser.uid + "+" + userData.uid;
-        const userChatId = userData.uid + "+" + currentUser.uid;
-
-        const currentUserChatData = await get(
-            ref(db, "user-chats/" + currentUserChatId)
-        );
-        const currentUserChats = currentUserChatData.val();
-
-        if (!currentUserChats) {
-            await set(ref(db, "user-chats/" + currentUserChatId), {
-                uid: currentUserChatId,
-                messages: [],
-            });
-        }
-
-        const userChatdata = await get(ref(db, "user-chats/" + userChatId));
-        const userChats = userChatdata.val();
-        if (!userChats) {
-            await set(ref(db, "user-chats/" + userChatId), {
-                uid: userChatId,
-                messages: [],
-            });
-        }
-
-        chatUserHeader(userData, date);
-    } catch (error) {
-        console.log(error);
-    }
 };
 
 //getting all the users from database
 onValue(ref(db, "users"), (snap) => {
     const data = snap.val();
     appendAllUsers(data);
+});
+
+onValue(ref(db, "users/" + currentUser.uid), (snap) => {
+    console.log(12);
+    const data = snap.val();
+    localStorage.setItem("user", JSON.stringify(data));
+    currentUser = data;
+    callAppendChatMethod(data);
 });
 
 document.getElementById("user-image").addEventListener("click", () => {
@@ -309,15 +278,14 @@ const handleUpdateProfile = async (type, value) => {
 
 // All methods related to chat will come here
 const chatUserHeader = (data, date) => {
-
     let chatUserInfo = document.querySelector(".chat-info");
-    chatUserInfo.innerHTML = null;
+    chatUserInfo.innerHTML = "";
 
     let div = document.createElement("div");
 
     let chatUserImage = document.createElement("div");
     chatUserImage.innerText = data.displayName[0].toUpperCase();
-    chatUserImage.style.backgroundColor = data.color
+    chatUserImage.style.backgroundColor = data.color;
 
     let innerDiv = document.createElement("div");
 
@@ -325,12 +293,184 @@ const chatUserHeader = (data, date) => {
     nameDiv.innerText = data.displayName;
 
     let dateDiv = document.createElement("div");
-    dateDiv.innerText = date;
+    if (date[date.length - 1] === "m") {
+        dateDiv.innerText = "last seen today at " + date;
+    } else {
+        dateDiv.innerText = "last seen at " + date;
+    }
 
     innerDiv.append(nameDiv, dateDiv);
 
     div.append(chatUserImage, innerDiv);
 
-    chatUserInfo.append(div)
+    chatUserInfo.append(div);
+};
 
+const appendChatsInChatBox = (currentUserChats, userChats) => {
+    const chatBox = document.querySelector(".chat-box");
+    chatBox.innerHTML = "";
+
+    if (document.querySelectorAll(".selected").length !== 1) return;
+
+    let chatArr = [...currentUserChats.messages, ...userChats.messages];
+
+    chatArr.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    chatArr.forEach((ele) => {
+        let messageDiv = document.createElement("div");
+        messageDiv.innerText = ele.message;
+
+        if (ele.id === currentUser.uid) {
+            messageDiv.setAttribute("class", "current-user-msg");
+        } else {
+            messageDiv.setAttribute("class", "user-msg");
+        }
+
+        let myDate;
+
+        let date = new Date(ele.date);
+
+        const differenceInDays = Math.round(
+            (new Date() - date) / (24 * 60 * 60 * 1000)
+        );
+
+        if (differenceInDays >= 7) {
+            myDate = date.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            });
+        } else if (differenceInDays > 0) {
+            myDate = days[date.getDay()];
+        } else {
+            myDate = date.toLocaleTimeString("en-IN", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+            });
+        }
+
+        let timeSpan = document.createElement("span");
+        timeSpan.setAttribute("id", "messageTime");
+        timeSpan.innerText = myDate;
+
+        messageDiv.append(timeSpan);
+        chatBox.append(messageDiv);
+    });
+
+    console.log(chatArr);
+};
+
+const createUserChat = async (userData) => {
+    console.log(currentUser.uid, currentUser.userChat);
+    try {
+        let obj = { ...currentUser };
+        obj.chatUser = userData.uid;
+        await update(ref(db, "users/" + currentUser.uid), obj);
+
+        const data = await get(ref(db, "users/" + currentUser.uid));
+        const updatedCurrentUser = data.val();
+
+        localStorage.setItem("user", JSON.stringify(updatedCurrentUser));
+
+        const currentUserChatId = currentUser.uid + "+" + userData.uid;
+        const userChatId = userData.uid + "+" + currentUser.uid;
+
+        const currentUserChatData = await get(
+            ref(db, "user-chats/" + currentUserChatId)
+        );
+        const currentUserChats = currentUserChatData.val();
+
+        if (!currentUserChats) {
+            await set(ref(db, "user-chats/" + currentUserChatId), {
+                uid: currentUserChatId,
+                messages: null,
+            });
+        }
+
+        const userChatdata = await get(ref(db, "user-chats/" + userChatId));
+        const userChats = userChatdata.val();
+        if (!userChats) {
+            await set(ref(db, "user-chats/" + userChatId), {
+                uid: userChatId,
+                messages: null,
+            });
+        }
+        appendChatsInChatBox(currentUserChats, userChats);
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+let message = document.getElementById("message");
+
+message.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && event.keyCode === 13) {
+        event.preventDefault();
+        if (document.querySelectorAll(".selected").length === 1) {
+            sendMessage(message.value);
+            message.value = "";
+        }
+    }
+});
+
+const sendMessage = async (message) => {
+    const currentUserChatId = currentUser.uid + "+" + currentUser.chatUser;
+
+    const currentUserChatData = await get(
+        ref(db, "user-chats/" + currentUserChatId)
+    );
+    const currentUserChats = currentUserChatData.val();
+
+    if (!currentUserChats.messages) {
+        currentUserChats.messages = [
+            {
+                date: new Date().toUTCString(),
+                read: false,
+                message: message,
+                id: currentUser.uid,
+            },
+        ];
+    } else {
+        currentUserChats.messages.push({
+            date: new Date().toUTCString(),
+            read: false,
+            message: message,
+            id: currentUser.uid,
+        });
+    }
+
+    try {
+        await update(
+            ref(db, "user-chats/" + currentUserChatId),
+            currentUserChats
+        );
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+const currentUserChatId = currentUser.uid + "+" + currentUser.chatUser;
+const userChatId = currentUser.chatUser + "+" + currentUser.uid;
+
+onValue(ref(db, "user-chats/" + currentUserChatId), (snap) => {
+    get(ref(db, "user-chats/" + userChatId)).then((data) =>
+        appendChatsInChatBox(snap.val(), data.val())
+    );
+});
+
+onValue(ref(db, "user-chats/" + userChatId), (snap) => {
+    get(ref(db, "user-chats/" + currentUserChatId)).then((data) =>
+        appendChatsInChatBox(data.val(), snap.val())
+    );
+});
+
+const callAppendChatMethod = async (currentUserData) => {
+    let currentUserChatId =
+        currentUserData.uid + "+" + currentUserData.userChat;
+    let userChatId = currentUserData.userChat + "+" + currentUserData.uid;
+    let data1 = await get(ref(db, "user-chats/" + currentUserChatId));
+    let data2 = await get(ref(db, "user-chats/" + userChatId));
+    console.log(1);
+    appendChatsInChatBox(data1.val(), data2.val());
 };

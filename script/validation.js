@@ -55,9 +55,8 @@ const authStateChanged = async (user) => {
             color: profileColors[colorIndex],
             date: new Date().toUTCString(),
         });
-    } else {
-        localStorage.setItem("user", JSON.stringify(currentUser));
     }
+    localStorage.setItem("user", JSON.stringify(currentUser));
     setTimeout(() => {
         window.location = "index.html";
     }, 300);
