@@ -95,9 +95,8 @@
     flex-direction: column;
     gap: 8px;
     overflow: auto;
-    justify-content: center;
     align-items: center;
-    padding-top: 40px;
+    padding-top: 20px;
 }
 
 .chat {
