@@ -432,6 +432,14 @@
         left: 50%;
         opacity: 1;
     }
+    .chat-box {
+        padding: 20px 20px;
+    }
+    .current-user-msg,
+    .user-msg {
+        max-width: 85%;
+        padding: 10px 25px 10px 15px;
+    }
     #exit-chat {
         display: flex;
         z-index: 999;
