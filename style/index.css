@@ -43,6 +43,7 @@
     background-color: black;
     color: white;
     display: flex;
+    flex-shrink: 0;
     justify-content: center;
     align-items: center;
     border-radius: 50%;
@@ -151,7 +152,6 @@
 .chat-image {
     width: 56px;
     height: 56px;
-    background-color: black;
     margin-left: 0px;
 }
 
