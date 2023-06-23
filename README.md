@@ -1,4 +1,4 @@
-# nrich-chat-app
+# [nrich-chat-app](https://chat-firebase-app.netlify.app/)
 
 This is a documentation file for a simple chat application built using HTML, CSS, and Vanilla JavaScript. The chat app utilizes Firebase for authentication and real-time database functionality.
 
