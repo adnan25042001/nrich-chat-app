@@ -10,6 +10,7 @@
     height: 100vh;
     width: 100%;
     display: flex;
+    position: relative;
 }
 
 .left {
@@ -35,7 +36,8 @@
 #logout,
 .big-user-image,
 .chat-image,
-.chat-info > div > :nth-child(1) {
+.chat-info > div > :nth-child(1),
+#exit-chat {
     height: 40px;
     width: 40px;
     background-color: black;
@@ -198,6 +200,19 @@
     font-weight: lighter;
     font-size: 14px;
     color: gray;
+}
+
+#exit-chat {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    background-color: transparent;
+    transition: ease 0.3s;
+    display: none;
+}
+
+#exit-chat:hover {
+    background-color: rgba(119, 119, 119, 0.37);
 }
 
 .chat-box {
@@ -402,6 +417,24 @@
         width: 100%;
     }
     .right {
-        display: none;
+        position: absolute;
+        top: 50%;
+        left: -150%;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 999;
+        transform: translate(-50%, -50%);
+        transition: ease all 0.5s;
+        background-color: #212c33;
+        border-left: 0.5px solid rgb(77, 77, 77);
+    }
+    .right.show-chat {
+        left: 50%;
+        opacity: 1;
+    }
+    #exit-chat {
+        display: flex;
+        z-index: 999;
     }
 }

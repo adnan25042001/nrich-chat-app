@@ -13,15 +13,8 @@ import {
     onValue,
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyC02O9S-g-7GO8dwSAt-XL1QuQUUiQ5mRY",
-    authDomain: "nrich-chat-app.firebaseapp.com",
-    databaseURL: "https://nrich-chat-app-default-rtdb.firebaseio.com",
-    projectId: "nrich-chat-app",
-    storageBucket: "nrich-chat-app.appspot.com",
-    messagingSenderId: "115859145847",
-    appId: "1:115859145847:web:a6d25d0ae8446ea4a23272",
-};
+import firebaseConfig from "./firebase.js";
+import profileColors from "./ProfileColors.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -39,24 +32,6 @@ const days = [
     "Thursday",
     "Friday",
     "Saturday",
-];
-
-const profileColors = [
-    "#E95F56",
-    "#C490D1",
-    "#897E95",
-    "#A6AB95",
-    "#E46000",
-    "#1090D8",
-    "#E86D8A",
-    "#1F7551",
-    "#9DC2B7",
-    "#FFE177",
-    "#A9D2FD",
-    "#FFCDA5",
-    "#4AAC67",
-    "#FFE5A5",
-    "#CD413C",
 ];
 
 const setProfileColors = (currentUser) => {
@@ -131,29 +106,7 @@ const appendAllUsers = (data) => {
         if (key === currentUser.uid) continue;
 
         // creating the date format here
-        let myDate;
-
-        let date = new Date(data[key].date);
-
-        const differenceInDays = Math.round(
-            (new Date() - date) / (24 * 60 * 60 * 1000)
-        );
-
-        if (differenceInDays >= 7) {
-            myDate = date.toLocaleDateString("en-IN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-        } else if (differenceInDays > 0) {
-            myDate = days[date.getDay()];
-        } else {
-            myDate = date.toLocaleTimeString("en-IN", {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-            });
-        }
+        let myDate = formatDate(data[key].date);
 
         let chat = document.createElement("div");
         chat.setAttribute("class", "chat");
@@ -165,6 +118,11 @@ const appendAllUsers = (data) => {
             selectedChat(chat);
             chatUserHeader(data[key], myDate);
             createUserChat(data[key]);
+            if (window.innerWidth <= 676) {
+                if (document.querySelectorAll(".selected").length !== 1) return;
+                let right = document.querySelector(".right");
+                right.classList.add("show-chat");
+            }
         });
 
         let chatImage = document.createElement("div");
@@ -180,16 +138,18 @@ const appendAllUsers = (data) => {
         innerDiv1.innerText = data[key].displayName;
 
         let innerDiv2 = document.createElement("div");
+        innerDiv2.setAttribute("id", key + "date");
         innerDiv2.innerText = myDate;
 
         span.append(innerDiv1, innerDiv2);
 
         let p = document.createElement("p");
+        p.setAttribute("id", key + "lastMsg");
         p.innerText = "...";
 
         let unreadMessageSpan = document.createElement("span");
-        unreadMessageSpan.setAttribute("id", "unreadMsg");
-        unreadMessageSpan.innerText = 1;
+        unreadMessageSpan.setAttribute("id", key + "unreadMsg");
+        unreadMessageSpan.innerText = 0;
         unreadMessageSpan.style.display = "none";
 
         div.append(span, p, unreadMessageSpan);
@@ -217,14 +177,14 @@ const selectedChat = async (element) => {
 };
 
 //getting all the users from database
-onValue(ref(db, "users"), (snap) => {
-    const data = snap.val();
+onValue(ref(db, "users"), async (snap) => {
+    const data = await snap.val();
     appendAllUsers(data);
+    updateChatsData(currentUser, data);
 });
 
-onValue(ref(db, "users/" + currentUser.uid), (snap) => {
-    console.log(12);
-    const data = snap.val();
+onValue(ref(db, "users/" + currentUser.uid), async (snap) => {
+    const data = await snap.val();
     localStorage.setItem("user", JSON.stringify(data));
     currentUser = data;
     callAppendChatMethod(data);
@@ -255,7 +215,7 @@ const handleUpdateProfile = async (type, value) => {
     try {
         await update(ref(db, "users/" + currentUser.uid), obj);
         const data = await get(ref(db, "users/" + currentUser.uid));
-        const user = data.val();
+        const user = await data.val();
 
         localStorage.setItem("user", JSON.stringify(user));
         setProfileColors(user);
@@ -281,6 +241,8 @@ const chatUserHeader = (data, date) => {
     let chatUserInfo = document.querySelector(".chat-info");
     chatUserInfo.innerHTML = "";
 
+    if (document.querySelectorAll(".selected").length !== 1) return;
+
     let div = document.createElement("div");
 
     let chatUserImage = document.createElement("div");
@@ -303,73 +265,101 @@ const chatUserHeader = (data, date) => {
 
     div.append(chatUserImage, innerDiv);
 
-    chatUserInfo.append(div);
+    let span = document.createElement("spna");
+    span.setAttribute("id", "exit-chat");
+    span.addEventListener("click", () => {
+        if (document.querySelectorAll(".selected").length !== 1) return;
+        let right = document.querySelector(".right");
+        right.classList.remove("show-chat");
+    });
+
+    let i = document.createElement("i");
+    i.setAttribute("class", "fa-solid fa-arrow-left");
+
+    span.append(i);
+
+    chatUserInfo.append(div, span);
 };
 
 const appendChatsInChatBox = (currentUserChats, userChats) => {
-    const chatBox = document.querySelector(".chat-box");
-    chatBox.innerHTML = "";
+    let chatBox = document.getElementById("chat-box");
+    chatBox.innerHTML = null;
 
     if (document.querySelectorAll(".selected").length !== 1) return;
 
-    let chatArr = [...currentUserChats.messages, ...userChats.messages];
-
-    chatArr.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    chatArr.forEach((ele) => {
-        let messageDiv = document.createElement("div");
-        messageDiv.innerText = ele.message;
-
-        if (ele.id === currentUser.uid) {
-            messageDiv.setAttribute("class", "current-user-msg");
-        } else {
-            messageDiv.setAttribute("class", "user-msg");
+    if (currentUserChats.messages || userChats.messages) {
+        let obj = { ...userChats };
+        if (obj.messages) {
+            for (let i = 0; i < obj.messages.length; i++) {
+                obj.messages[i].read = true;
+            }
         }
 
-        let myDate;
+        update(ref(db, "user-chats/" + userChats.uid), obj).then(() => {
+            let unreadMessageSpan = document.getElementById(
+                userChats.uid.trim().split("+")[0] + "unreadMsg"
+            );
+            unreadMessageSpan.innerText = 0;
+            unreadMessageSpan.style.display = "none";
+        });
 
-        let date = new Date(ele.date);
+        let chatArr = [
+            ...(currentUserChats.messages || []),
+            ...(userChats.messages || []),
+        ];
 
-        const differenceInDays = Math.round(
-            (new Date() - date) / (24 * 60 * 60 * 1000)
-        );
+        chatArr.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        if (differenceInDays >= 7) {
-            myDate = date.toLocaleDateString("en-IN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-        } else if (differenceInDays > 0) {
-            myDate = days[date.getDay()];
-        } else {
-            myDate = date.toLocaleTimeString("en-IN", {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-            });
-        }
+        chatBox.innerHTML = "";
 
-        let timeSpan = document.createElement("span");
-        timeSpan.setAttribute("id", "messageTime");
-        timeSpan.innerText = myDate;
+        chatArr.forEach((ele, i) => {
+            let messageDiv = document.createElement("div");
+            messageDiv.innerText = ele.message;
 
-        messageDiv.append(timeSpan);
-        chatBox.append(messageDiv);
-    });
+            if (ele.id === currentUser.uid) {
+                messageDiv.setAttribute("class", "current-user-msg");
+            } else {
+                messageDiv.setAttribute("class", "user-msg");
+            }
 
-    console.log(chatArr);
+            let myDate = formatDate(ele.date);
+
+            if (
+                userChats.messages &&
+                ele === userChats.messages[userChats.messages.length - 1]
+            ) {
+                get(
+                    ref(db, "users/" + userChats.uid.trim().split("+")[0])
+                ).then(async (data) => {
+                    let user = await data.val();
+                    chatUserHeader(user, myDate);
+                });
+            }
+
+            if (i === chatArr.length - 1) {
+                document.getElementById(
+                    userChats.uid.trim().split("+")[0] + "date"
+                ).innerText = myDate;
+            }
+
+            let timeSpan = document.createElement("span");
+            timeSpan.setAttribute("id", "messageTime");
+            timeSpan.innerText = myDate;
+
+            messageDiv.append(timeSpan);
+            chatBox.append(messageDiv);
+        });
+    }
 };
 
 const createUserChat = async (userData) => {
-    console.log(currentUser.uid, currentUser.userChat);
     try {
         let obj = { ...currentUser };
         obj.chatUser = userData.uid;
         await update(ref(db, "users/" + currentUser.uid), obj);
 
         const data = await get(ref(db, "users/" + currentUser.uid));
-        const updatedCurrentUser = data.val();
+        const updatedCurrentUser = await data.val();
 
         localStorage.setItem("user", JSON.stringify(updatedCurrentUser));
 
@@ -379,21 +369,21 @@ const createUserChat = async (userData) => {
         const currentUserChatData = await get(
             ref(db, "user-chats/" + currentUserChatId)
         );
-        const currentUserChats = currentUserChatData.val();
+        const currentUserChats = await currentUserChatData.val();
 
         if (!currentUserChats) {
             await set(ref(db, "user-chats/" + currentUserChatId), {
                 uid: currentUserChatId,
-                messages: null,
+                messages: [],
             });
         }
 
         const userChatdata = await get(ref(db, "user-chats/" + userChatId));
-        const userChats = userChatdata.val();
+        const userChats = await userChatdata.val();
         if (!userChats) {
             await set(ref(db, "user-chats/" + userChatId), {
                 uid: userChatId,
-                messages: null,
+                messages: [],
             });
         }
         appendChatsInChatBox(currentUserChats, userChats);
@@ -420,7 +410,7 @@ const sendMessage = async (message) => {
     const currentUserChatData = await get(
         ref(db, "user-chats/" + currentUserChatId)
     );
-    const currentUserChats = currentUserChatData.val();
+    const currentUserChats = await currentUserChatData.val();
 
     if (!currentUserChats.messages) {
         currentUserChats.messages = [
@@ -445,6 +435,10 @@ const sendMessage = async (message) => {
             ref(db, "user-chats/" + currentUserChatId),
             currentUserChats
         );
+        callAppendChatMethod(currentUser);
+        let data = await get(ref(db, "users"));
+        let users = await data.val();
+        updateChatsData(currentUser, users);
     } catch (error) {
         console.log(error);
     }
@@ -471,6 +465,98 @@ const callAppendChatMethod = async (currentUserData) => {
     let userChatId = currentUserData.userChat + "+" + currentUserData.uid;
     let data1 = await get(ref(db, "user-chats/" + currentUserChatId));
     let data2 = await get(ref(db, "user-chats/" + userChatId));
-    console.log(1);
     appendChatsInChatBox(data1.val(), data2.val());
 };
+
+const updateChatsData = async (currentUser, users) => {
+    for (let key in users) {
+        if (key === currentUser.uid) continue;
+
+        const currentUserChatId = currentUser.uid + "+" + key;
+        const userChatId = key + "+" + currentUser.uid;
+
+        const currentUserChatData = await get(
+            ref(db, "user-chats/" + currentUserChatId)
+        );
+        const currentUserChats = await currentUserChatData.val();
+
+        const userChatdata = await get(ref(db, "user-chats/" + userChatId));
+        const userChats = await userChatdata.val();
+
+        let arr;
+        if (currentUserChats && userChats) {
+            arr = [
+                ...(currentUserChats.messages || []),
+                ...(userChats.messages || []),
+            ];
+        } else if (currentUserChats) {
+            arr = [...(currentUserChats.messages || [])];
+        } else if (userChats) {
+            arr = [...(userChats.messages || [])];
+        } else {
+            arr = [];
+        }
+
+        arr.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        if (arr.length === 0) continue;
+
+        let date = document.getElementById(key + "date");
+        date.innerText = formatDate(arr[arr.length - 1].date);
+
+        let msg = document.getElementById(key + "lastMsg");
+        msg.innerText = arr[arr.length - 1].message;
+
+        let count = 0;
+
+        let msgArr;
+        if (userChats) {
+            msgArr = [...(userChats.messages || [])];
+        }
+        console.log(msgArr);
+        for (let i = 0; i < msgArr.length; i++) {
+            if (!msgArr[i].read) count++;
+        }
+
+        if (count > 0) {
+            let unreadMsg = document.getElementById(key + "unreadMsg");
+            unreadMsg.innerText = count;
+            unreadMsg.style.display = "flex";
+        }
+    }
+};
+
+const formatDate = (dateString) => {
+    let myDate;
+
+    let date = new Date(dateString);
+
+    const differenceInDays = Math.round(
+        (new Date() - date) / (24 * 60 * 60 * 1000)
+    );
+
+    if (differenceInDays >= 7) {
+        myDate = date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+    } else if (differenceInDays > 0) {
+        myDate = days[date.getDay()];
+    } else {
+        myDate = date.toLocaleTimeString("en-IN", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+        });
+    }
+    return myDate;
+};
+
+document.getElementById("search").addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && event.keyCode === 13) {
+        event.preventDefault();
+        alert("sorry for inconvenience\nsearch method is not implemented yet");
+        document.getElementById("search").value = "";
+    }
+});
