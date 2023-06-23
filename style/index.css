@@ -153,6 +153,17 @@
     width: 56px;
     height: 56px;
     margin-left: 0px;
+    position: relative;
+}
+
+.online {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgb(34, 197, 94);
 }
 
 .chat > :nth-child(2) > :nth-child(3) {

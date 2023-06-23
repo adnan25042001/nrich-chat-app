@@ -29,6 +29,7 @@ const authStateChanged = async (user) => {
             email: user.email,
             color: profileColors[colorIndex],
             date: new Date().toUTCString(),
+            online: true,
         });
     }
     localStorage.setItem("user", JSON.stringify(currentUser));

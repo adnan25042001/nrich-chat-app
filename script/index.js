@@ -113,7 +113,7 @@ const appendAllUsers = (data) => {
 
         chat.addEventListener("click", async () => {
             let obj = { ...currentUser };
-            obj.userChat = key;
+            obj.chatUser = key;
             await update(ref(db, "users/" + currentUser.uid), obj);
             selectedChat(chat);
             chatUserHeader(data[key], myDate);
@@ -129,6 +129,13 @@ const appendAllUsers = (data) => {
         chatImage.setAttribute("class", "chat-image");
         chatImage.style.backgroundColor = data[key].color;
         chatImage.innerText = data[key].displayName[0].toUpperCase();
+
+        let online = document.createElement("span");
+        online.setAttribute("class", "online");
+
+        if (data[key].online) {
+            chatImage.append(online);
+        }
 
         let div = document.createElement("div");
 
@@ -165,6 +172,11 @@ document.getElementById("logout").addEventListener("click", () => logout());
 const logout = () => {
     signOut(auth).then(() => {
         localStorage.setItem("user", null);
+
+        currentUser.online = false;
+
+        update(ref(db, "users/" + currentUser.uid), currentUser);
+
         window.location = "login.html";
     });
 };
@@ -462,7 +474,7 @@ onValue(ref(db, "user-chats/" + userChatId), (snap) => {
 const callAppendChatMethod = async (currentUserData) => {
     let currentUserChatId =
         currentUserData.uid + "+" + currentUserData.userChat;
-    let userChatId = currentUserData.userChat + "+" + currentUserData.uid;
+    let userChatId = currentUserData.chatUser + "+" + currentUserData.uid;
     let data1 = await get(ref(db, "user-chats/" + currentUserChatId));
     let data2 = await get(ref(db, "user-chats/" + userChatId));
     appendChatsInChatBox(data1.val(), data2.val());
