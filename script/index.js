@@ -175,9 +175,9 @@ const logout = () => {
 
         currentUser.online = false;
 
-        update(ref(db, "users/" + currentUser.uid), currentUser);
-
-        window.location = "login.html";
+        update(ref(db, "users/" + currentUser.uid), currentUser).then(
+            () => (window.location = "./login.html")
+        );
     });
 };
 
