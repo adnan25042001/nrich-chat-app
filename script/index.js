@@ -299,69 +299,67 @@ const appendChatsInChatBox = (currentUserChats, userChats) => {
 
     if (document.querySelectorAll(".selected").length !== 1) return;
 
-    if (currentUserChats.messages || userChats.messages) {
-        let obj = { ...userChats };
-        if (obj.messages) {
-            for (let i = 0; i < obj.messages.length; i++) {
-                obj.messages[i].read = true;
-            }
+    let obj = { ...userChats };
+    if (obj.messages) {
+        for (let i = 0; i < obj.messages.length; i++) {
+            obj.messages[i].read = true;
+        }
+    }
+
+    update(ref(db, "user-chats/" + userChats.uid), obj).then(() => {
+        let unreadMessageSpan = document.getElementById(
+            userChats.uid.trim().split("+")[0] + "unreadMsg"
+        );
+        unreadMessageSpan.innerText = 0;
+        unreadMessageSpan.style.display = "none";
+    });
+
+    let chatArr = [
+        ...(currentUserChats?.messages || []),
+        ...(userChats?.messages || []),
+    ];
+
+    chatArr.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    chatBox.innerHTML = "";
+
+    chatArr.forEach((ele, i) => {
+        let messageDiv = document.createElement("div");
+        messageDiv.innerText = ele.message;
+
+        if (ele.id === currentUser.uid) {
+            messageDiv.setAttribute("class", "current-user-msg");
+        } else {
+            messageDiv.setAttribute("class", "user-msg");
         }
 
-        update(ref(db, "user-chats/" + userChats.uid), obj).then(() => {
-            let unreadMessageSpan = document.getElementById(
-                userChats.uid.trim().split("+")[0] + "unreadMsg"
-            );
-            unreadMessageSpan.innerText = 0;
-            unreadMessageSpan.style.display = "none";
-        });
+        let myDate = formatDate(ele.date);
 
-        let chatArr = [
-            ...(currentUserChats.messages || []),
-            ...(userChats.messages || []),
-        ];
-
-        chatArr.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        chatBox.innerHTML = "";
-
-        chatArr.forEach((ele, i) => {
-            let messageDiv = document.createElement("div");
-            messageDiv.innerText = ele.message;
-
-            if (ele.id === currentUser.uid) {
-                messageDiv.setAttribute("class", "current-user-msg");
-            } else {
-                messageDiv.setAttribute("class", "user-msg");
-            }
-
-            let myDate = formatDate(ele.date);
-
-            if (
-                userChats.messages &&
-                ele === userChats.messages[userChats.messages.length - 1]
-            ) {
-                get(
-                    ref(db, "users/" + userChats.uid.trim().split("+")[0])
-                ).then(async (data) => {
+        if (
+            userChats.messages &&
+            ele === userChats.messages[userChats.messages.length - 1]
+        ) {
+            get(ref(db, "users/" + userChats.uid.trim().split("+")[0])).then(
+                async (data) => {
                     let user = await data.val();
                     chatUserHeader(user, myDate);
-                });
-            }
+                }
+            );
+        }
 
-            if (i === chatArr.length - 1) {
-                document.getElementById(
-                    userChats.uid.trim().split("+")[0] + "date"
-                ).innerText = myDate;
-            }
+        if (i === chatArr.length - 1) {
+            document.getElementById(
+                userChats.uid.trim().split("+")[0] + "date"
+            ).innerText = myDate;
+        }
 
-            let timeSpan = document.createElement("span");
-            timeSpan.setAttribute("id", "messageTime");
-            timeSpan.innerText = myDate;
+        let timeSpan = document.createElement("span");
+        timeSpan.setAttribute("id", "messageTime");
+        timeSpan.innerText = myDate;
 
-            messageDiv.append(timeSpan);
-            chatBox.append(messageDiv);
-        });
-    }
+        messageDiv.append(timeSpan);
+        chatBox.append(messageDiv);
+    });
 };
 
 const createUserChat = async (userData) => {
@@ -456,28 +454,15 @@ const sendMessage = async (message) => {
     }
 };
 
-const currentUserChatId = currentUser.uid + "+" + currentUser.chatUser;
-const userChatId = currentUser.chatUser + "+" + currentUser.uid;
-
-onValue(ref(db, "user-chats/" + currentUserChatId), (snap) => {
-    get(ref(db, "user-chats/" + userChatId)).then((data) =>
-        appendChatsInChatBox(snap.val(), data.val())
-    );
-});
-
-onValue(ref(db, "user-chats/" + userChatId), (snap) => {
-    get(ref(db, "user-chats/" + currentUserChatId)).then((data) =>
-        appendChatsInChatBox(data.val(), snap.val())
-    );
-});
-
 const callAppendChatMethod = async (currentUserData) => {
     let currentUserChatId =
-        currentUserData.uid + "+" + currentUserData.userChat;
+        currentUserData.uid + "+" + currentUserData.chatUser;
     let userChatId = currentUserData.chatUser + "+" + currentUserData.uid;
     let data1 = await get(ref(db, "user-chats/" + currentUserChatId));
     let data2 = await get(ref(db, "user-chats/" + userChatId));
-    appendChatsInChatBox(data1.val(), data2.val());
+    let currentUserChats = data1.val();
+    let userChats = data2.val();
+    appendChatsInChatBox(currentUserChats, userChats);
 };
 
 const updateChatsData = async (currentUser, users) => {
@@ -498,8 +483,8 @@ const updateChatsData = async (currentUser, users) => {
         let arr;
         if (currentUserChats && userChats) {
             arr = [
-                ...(currentUserChats.messages || []),
-                ...(userChats.messages || []),
+                ...(currentUserChats?.messages || []),
+                ...(userChats?.messages || []),
             ];
         } else if (currentUserChats) {
             arr = [...(currentUserChats.messages || [])];
@@ -525,7 +510,7 @@ const updateChatsData = async (currentUser, users) => {
         if (userChats) {
             msgArr = [...(userChats.messages || [])];
         }
-        console.log(msgArr);
+
         for (let i = 0; i < msgArr.length; i++) {
             if (!msgArr[i].read) count++;
         }
