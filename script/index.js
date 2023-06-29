@@ -523,6 +523,15 @@ const updateChatsData = async (currentUser, users) => {
     }
 };
 
+const currentUserChatId = currentUser.uid + "+" + currentUser.chatUser;
+const userChatId = currentUser.chatUser + "+" + currentUser.uid;
+
+onValue(ref(db, "user-chats/" + userChatId), (snap) => {
+    get(ref(db, "user-chats/" + currentUserChatId)).then((data) =>
+        appendChatsInChatBox(data.val(), snap.val())
+    );
+});
+
 const formatDate = (dateString) => {
     let myDate;
 
