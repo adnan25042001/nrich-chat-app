@@ -527,9 +527,13 @@ const currentUserChatId = currentUser.uid + "+" + currentUser.chatUser;
 const userChatId = currentUser.chatUser + "+" + currentUser.uid;
 
 onValue(ref(db, "user-chats/" + userChatId), (snap) => {
-    get(ref(db, "user-chats/" + currentUserChatId)).then((data) =>
-        appendChatsInChatBox(data.val(), snap.val())
-    );
+    get(ref(db, "user-chats/" + currentUserChatId)).then((data) => {
+        appendChatsInChatBox(data.val(), snap.val());
+        get(ref(db, "users")).then((data) => {
+            let users = data.val();
+            updateChatsData(currentUser, users);
+        });
+    });
 });
 
 const formatDate = (dateString) => {
